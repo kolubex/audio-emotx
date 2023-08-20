@@ -21,10 +21,10 @@ class srt_dataset(object):
         self.feat_model = config["srt_feat_model"]
         self.data_path = Path(config["data_path"])
         self.srt_feat_path = self.data_path/config["srt_feat_dir"]
-        self.max_features = config["max_srt_feats"]
+        self.max_features = config["max_srt_feats"] # as we have max_srt_feats(300) bins for each scene
         self.srt_feat_dim = config["feat_info"][self.feat_model]["srt_feat_dim"]
         self.top_k = top_k
-        self.srt_type = config["srt_feat_type"]
+        self.srt_type = config["srt_feat_type"] # concat - independent(each word has representation, and they are concatenated)
         self.srt_feats_dir = "pretrained" if config["srt_feat_pretrained"] else "finetuned_t{}".format(self.top_k)
         self.use_cls_only = config["use_srt_cls_only"]
         self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base", cache_dir=config["hugging_face_cache_path"])

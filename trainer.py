@@ -59,6 +59,7 @@ class trainer(object):
         self.scene_feat_dim = config["feat_info"][config["scene_feat_type"]]["scene_feat_dim"]
         self.char_feat_dim = config["feat_info"][config["face_feat_type"]]["face_feat_dim"]
         self.srt_feat_dim = int(config["feat_info"][config["srt_feat_model"]]["srt_feat_dim"])
+        # self.audio_feat_dim = config["feat_info"][config["audio_feat_model"]]["audio_feat_dim"]
         self.num_pos_embeddings = int(config["max_possible_vid_frame_no"]/config["feat_sampling_rate"])
         if config["model_no"] == 1.1:
             self.model = mlp_char(self.train_dataset.top_k, self.char_feat_dim, self.device).to(self.device)
@@ -83,6 +84,7 @@ class trainer(object):
                                self.scene_feat_dim,
                                self.char_feat_dim,
                                self.srt_feat_dim,
+                            #    self.audio_feat_dim,
                                config["num_enc_layers"],
                                config["num_chars"],
                                config["max_feats"]).to(self.device)
@@ -188,6 +190,7 @@ def get_config():
     Loads the config file and updates it with the command line arguments.
     The model name is also updated. The config is then converted to a dictionary.
     """
+    # base_conf = OmegaConf.load("config_copy.yaml")
     base_conf = OmegaConf.load("config.yaml")
     overrides = OmegaConf.from_cli()
     updated_conf = OmegaConf.merge(base_conf, overrides)
