@@ -187,6 +187,8 @@ def fill_model_name(config):
                                          config["top_k"] if not config["use_emotic_mapping"] else 26)
     model_name += "_local" if not config["wandb"]["logging"] else ""
     model_name += "_{}".format(config["model_name_suffix"])
+    if(config["use_audio_feats"]):
+        model_name += "_audio"
     return model_name
 
 
@@ -196,7 +198,7 @@ def get_config():
     The model name is also updated. The config is then converted to a dictionary.
     """
     # base_conf = OmegaConf.load("config_copy.yaml")
-    base_conf = OmegaConf.load("config.yaml")
+    base_conf = OmegaConf.load("config_copy.yaml")
     overrides = OmegaConf.from_cli()
     updated_conf = OmegaConf.merge(base_conf, overrides)
     OmegaConf.update(updated_conf, "model_name", fill_model_name(updated_conf))
