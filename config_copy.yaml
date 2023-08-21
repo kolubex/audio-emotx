@@ -63,7 +63,7 @@ seed: 0
 
 # WandB related variables
 wandb:
-  logging: False
+  logging: True
   project: "emotx_trail" # WandB project name
   entity: "lakshmipathi-balaji" # WandB username
   sweeps: False
