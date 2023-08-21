@@ -17,6 +17,7 @@ import utils.mg_utils as utils
 import wandb
 import yaml
 
+import os
 
 class trainer(object):
     def __init__(self, config):
@@ -31,6 +32,8 @@ class trainer(object):
         self.config = config
         self.config_sanity_check()
         data_split = utils.read_train_val_test_splits(config["resource_path"])
+        # remove a particular element from the list that is the value of data_split with key as "train".
+        # data_split["train"].remove("tt0133093")
         self.train_dataset = character_emo_dataset(config=config,
                                                    movie_ids=data_split["train"],
                                                    split_type="train",
@@ -54,12 +57,13 @@ class trainer(object):
                                          num_workers=config["num_cpus"],
                                          collate_fn=self.val_dataset.collate)
         self.device = torch.device('cuda:{}'.format(config["gpu_id"]) if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device("cpu")
         torch.cuda.set_device(self.device)
         self.epochs = config["epochs"]
         self.scene_feat_dim = config["feat_info"][config["scene_feat_type"]]["scene_feat_dim"]
         self.char_feat_dim = config["feat_info"][config["face_feat_type"]]["face_feat_dim"]
         self.srt_feat_dim = int(config["feat_info"][config["srt_feat_model"]]["srt_feat_dim"])
-        # self.audio_feat_dim = config["feat_info"][config["audio_feat_model"]]["audio_feat_dim"]
+        self.audio_feat_dim = config["feat_info"][config["audio_feat_model"]]["audio_feat_dim"]
         self.num_pos_embeddings = int(config["max_possible_vid_frame_no"]/config["feat_sampling_rate"])
         if config["model_no"] == 1.1:
             self.model = mlp_char(self.train_dataset.top_k, self.char_feat_dim, self.device).to(self.device)
@@ -84,7 +88,7 @@ class trainer(object):
                                self.scene_feat_dim,
                                self.char_feat_dim,
                                self.srt_feat_dim,
-                            #    self.audio_feat_dim,
+                               self.audio_feat_dim,
                                config["num_enc_layers"],
                                config["num_chars"],
                                config["max_feats"]).to(self.device)
@@ -141,6 +145,7 @@ class trainer(object):
         Optimizer, scheduler and criterion are initialized.
         A train method is called which trains the model.
         """
+        # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         if self.config["wandb"]["logging"] and (not self.config["wandb"]["sweeps"]):
             wandb.init(project=self.config["wandb"]["project"], entity=self.config["wandb"]["entity"], config=self.config)
             wandb.run.name = self.config["model_name"]

@@ -76,6 +76,7 @@ def read_train_val_test_splits(PATH):
     """
     with open(PATH + 'split.json', 'r') as f:
         data_split = json.load(f)
+    data_split["train"].remove("tt1568346")
     return data_split
 
 

@@ -43,6 +43,7 @@ class trainer(object):
                                          num_workers=self.config['num_cpus'],
                                          collate_fn=self.val_dataset.collate)
         self.device = torch.device("cuda:{}".format(self.config["gpu_id"]) if torch.cuda.is_available() else "cpu")
+        # self.config["device"] = "cpu"
         self.epochs = self.config["epochs"]
         self.model = finetune_RoBERTa(self.train_dataset.top_k, self.config["hugging_face_cache_path"]).to(self.device)
         self.config["model_name"] = "RoBERTa_finetuned_t{}".format(self.train_dataset.top_k)

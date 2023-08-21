@@ -1,6 +1,7 @@
 from dataloaders.char_dataset import char_dataset
 from dataloaders.scene_dataset import scene_dataset
 from dataloaders.srt_dataset import srt_dataset
+from dataloaders.audio_dataset import audio_dataset
 from pathlib import Path
 from torch.utils.data import Dataset
 from utils.movie_scene_mapper import movie_scene_mapper
@@ -14,7 +15,7 @@ class character_emo_dataset(Dataset):
     """
     Dataset object used to load scene, character and subtitle features along with multilabel targets for emotion recogntion.
     """
-    def __init__(self, config, movie_ids, split_type, random_feat_selection=True, with_srt=True, emo2id=dict()):
+    def __init__(self, config, movie_ids, split_type, random_feat_selection=True, with_srt=True,with_audio=True, emo2id=dict()):
         """
         Args:
             config (dict): Configuration dictionary.
@@ -29,14 +30,17 @@ class character_emo_dataset(Dataset):
         self.scene_feat_dim = config["feat_info"][config["scene_feat_type"]]["scene_feat_dim"]
         self.char_feat_dim = config["feat_info"][config["face_feat_type"]]["face_feat_dim"]
         self.srt_feat_dim = config["feat_info"][config["srt_feat_model"]]["srt_feat_dim"]
+        self.audio_feat_dim = config["feat_info"][config["audio_feat_model"]]["audio_feat_dim"]
         self.feat_sampling_rate = config["feat_sampling_rate"]
         self.num_chars = config["num_chars"]
         self.with_srt = with_srt
+        self.with_audio = with_audio
         self.max_features = config["max_feats"]
         self.vid_fps = config["vid_fps"]
         self.bin_size = self.feat_sampling_rate/self.vid_fps
         self.num_bins = int(self.config["max_possible_vid_frame_no"]/self.feat_sampling_rate)
         self.fps_boundaries = torch.cumsum(torch.tensor([0]+[self.bin_size]*self.num_bins), dim=0)
+        # this basically gives a tensor of [0,1/3,2/3,1,4/3,...] => boundaries to frames in seconds (then why not keep vid_fps as 24)
         self.split_type = split_type
         self.char_dataset_obj = char_dataset(config, movie_ids, random_feat_selection)
         self.movie_scene_map = movie_scene_mapper(self.config, movie_ids, emo2id,
@@ -46,6 +50,7 @@ class character_emo_dataset(Dataset):
         self.top_k = self.movie_scene_map.top_k
         self.scene_dataset_obj = scene_dataset(config, random_feat_selection)
         self.srt_dataset_obj = srt_dataset(config, movie_ids, self.top_k)
+        self.audio_dataset_obj = audio_dataset(config, movie_ids, self.top_k)
 
     def get_emo2id_map(self):
         """
@@ -138,6 +143,8 @@ class character_emo_dataset(Dataset):
             srt_feats = torch.stack([resp["feats"][2] for resp in batches])
             srt_times = torch.stack([resp["timestamps"][2] for resp in batches])
             srt_bins = torch.bucketize(srt_times, self.fps_boundaries)
+            # print("srt_bins.shape: ", srt_bins.shape)
+            # print("srt_bins: ", srt_bins)
             srt_masks = torch.stack([resp["masks"][2] for resp in batches])
             if not self.config["joint_character_modeling"]:
                 srt_feats = torch.cat([feat.repeat(char_count_in_scenes[ndx], 1, 1) for ndx, feat in enumerate(srt_feats)])
@@ -148,9 +155,25 @@ class character_emo_dataset(Dataset):
             srt_times = torch.zeros((scene_feats.shape[0], self.max_features))
             srt_masks = torch.ones((scene_feats.shape[0], self.max_features))
             srt_bins = torch.zeros((scene_feats.shape[0], self.max_features)).to(torch.long)
+        if self.config["use_audio_feats"]:
+            audio_feats = torch.stack([resp["feats"][3] for resp in batches])
+            audio_times = torch.stack([resp["timestamps"][3] for resp in batches])
+            audio_bins = torch.bucketize(audio_times, self.fps_boundaries)
+            # print("audio_bins.shape: ", audio_bins.shape)
+            # print("audio_bins: ", audio_bins)
+            audio_masks = torch.stack([resp["masks"][3] for resp in batches])
+            if not self.config["joint_character_modeling"]:
+                audio_feats = torch.cat([feat.repeat(char_count_in_scenes[ndx], 1, 1) for ndx, feat in enumerate(audio_feats)])
+                audio_bins = torch.cat([bins.repeat(char_count_in_scenes[ndx], 1) for ndx, bins in enumerate(audio_bins)])
+                audio_masks = torch.cat([mask.repeat(char_count_in_scenes[ndx], 1) for ndx, mask in enumerate(audio_masks)])
+        else:
+            audio_feats = torch.zeros((scene_feats.shape[0], self.max_features, self.audio_feat_dim))
+            audio_times = torch.zeros((scene_feats.shape[0], self.max_features))
+            audio_masks = torch.ones((scene_feats.shape[0], self.max_features))
+            audio_bins = torch.zeros((scene_feats.shape[0], self.max_features)).to(torch.long)
         collated_data = {
-            "feats": [char_feats, scene_feats, srt_feats, char_frames, scene_frames, srt_bins],
-            "masks": [char_masks, scene_masks, srt_masks, char_target_mask, scene_target_mask],
+            "feats": [char_feats, scene_feats, srt_feats,audio_feats, char_frames, scene_frames, srt_bins, audio_bins],
+            "masks": [char_masks, scene_masks, srt_masks,audio_masks, char_target_mask, scene_target_mask],
             "targets": [char_targets, scene_targets],
         }
         return collated_data
@@ -170,16 +193,19 @@ class character_emo_dataset(Dataset):
         scene_feat, scene_feat_mask, scene_frames = None, None, None
         char_feats, char_feat_masks, char_frames = None, None, None
         srt_feats, srt_pad_mask, srt_times = None, None, None
+        audio_feats, audio_pad_mask, audio_times = None, None, None
         if self.config["use_scene_feats"]:
             scene_feat, scene_feat_mask, scene_frames = self.scene_dataset_obj.get_scene_feat(scenes)
         if self.config["use_char_feats"]:
             char_feats, char_feat_masks, char_frames = self.char_dataset_obj.get_character_feat(scenes, chars)
         if self.config["use_srt_feats"]:
             srt_feats, srt_times, srt_pad_mask = self.srt_dataset_obj.get_srt_feats(scenes)
+        if self.config["use_audio_feats"]:
+            audio_feats, audio_times, audio_pad_mask = self.audio_dataset_obj.get_audio_feats(scenes)
         response = {
-            "feats": [char_feats, scene_feat, srt_feats],
-            "masks": [char_feat_masks, scene_feat_mask, srt_pad_mask],
-            "timestamps": [char_frames, scene_frames, srt_times],
+            "feats": [char_feats, scene_feat, srt_feats, audio_feats],
+            "masks": [char_feat_masks, scene_feat_mask, srt_pad_mask, audio_pad_mask],
+            "timestamps": [char_frames, scene_frames, srt_times, audio_times],
             "targets": [targets["chars"], targets["scene"]],
         }
         return response

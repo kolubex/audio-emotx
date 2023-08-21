@@ -23,6 +23,7 @@ def set_seed(seed_value):
     torch.manual_seed(seed_value)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed_value)
+    # without cuda
 
 
 def save_config(config, path, filename):

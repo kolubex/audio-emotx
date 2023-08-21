@@ -30,6 +30,7 @@ class srts_feat_extraction(object):
         self.top_k = config["top_k"] if not config["use_emotic_mapping"] else 26
         self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base", cache_dir=config["hugging_face_cache_path"])
         self.device = torch.device("cuda:{}".format(config["gpu_id"]) if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device("cpu")
         if not config["srt_feat_pretrained"]:
             print("Selected finetuned RoBERTa model for top-{} emotions".format(self.top_k))
             self.srts_feat_save_path = self.srts_feat_save_path/("finetuned_t{}".format(self.top_k))
