@@ -10,7 +10,6 @@
 #SBATCH --mail-type ALL
 
 cd /home2/kolubex/audio_emotx/audio-emotx/
-conda init
-conda activate emotx
+# conda init
 git checkout audio_integration
-python trainer.py
+/home2/kolubex/.miniconda3/envs/emotx/bin/python3 trainer.py

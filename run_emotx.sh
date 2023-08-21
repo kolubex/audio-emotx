@@ -10,5 +10,5 @@
 #SBATCH --mail-type ALL
 
 cd /home2/kolubex/audio_emotx/audio-emotx/
-git checkout audio_integration
-python trainer.py
+git checkout master
+/home2/kolubex/.miniconda3/envs/emotx/bin/python3 trainer.py
