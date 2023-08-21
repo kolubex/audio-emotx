@@ -50,7 +50,7 @@ target_prediction_threshold: 0.5
 top_k: 10 # 25
 feat_sampling_rate: 8
 num_chars: 4
-num_enc_layers: 2
+num_enc_layers: 3
 max_feats: 300
 max_srt_feats: 300
 max_audio_feats: 300
