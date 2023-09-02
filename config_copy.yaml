@@ -30,13 +30,13 @@ pkl_name: "2017-11-02-51-7637_py3.pkl"
 use_scene_feats: True
 use_char_feats: True
 use_srt_feats: True
-use_audio_feats: True
+use_audio_feats: False
 get_scene_targets: True
 get_char_targets: True
 random_feat_selection: True
 use_srt_cls_only: True
 joint_character_modeling: True
-srt_feat_pretrained: False
+srt_feat_pretrained: True
 audio_feat_pretrained: True
 use_emotic_mapping: False
 shuffle_characters: False
@@ -50,13 +50,13 @@ target_prediction_threshold: 0.5
 top_k: 10 # 25
 feat_sampling_rate: 8
 num_chars: 4
-num_enc_layers: 2
+num_enc_layers: 3
 max_feats: 300
 max_srt_feats: 300
 max_audio_feats: 300
 batch_size: 4
 num_cpus: 9
-epochs: 20
+epochs: 30
 lr: 0.00001
 gpu_id: 0
 seed: 0
