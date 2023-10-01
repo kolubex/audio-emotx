@@ -92,6 +92,7 @@ class clip_srt(object):
                 for sub in srt:
                     parsed_srt_objs = self.process_sub(sub)
                     self.time_srt[key] += [((obj[0].ordinal+(obj[1].ordinal-obj[0].ordinal)/2)/1000, obj[-1]) for obj in parsed_srt_objs]
+                    # todo : Make a new config "collective" to return whole timestamps and not mid timestamps.
                     self.srts[key] += " ".join([obj[-1] for obj in parsed_srt_objs]) + " "
                 self.srts[key] = self.srts[key].strip()
 

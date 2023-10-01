@@ -1,7 +1,7 @@
 from pathlib import Path
 import numpy
 import torch
-
+import pickle
 class audio_dataset(object):
     """
     Dataset class is to load audio features for given movie ids.
@@ -27,13 +27,23 @@ class audio_dataset(object):
         self.config = config
         self.feat_model = config["audio_feat_model"]
         self.data_path = Path(config["data_path"])
-        self.audio_feat_path = self.data_path/config["audio_feat_dir"]
+        self.top_k = top_k
+        self.audio_feat_path = self.data_path/Path(config["audio_feat_dir"])/Path(f"""{config["audio_feat_type"]}""")
         self.max_features = config["max_audio_feats"] # as we have max_audio_feats(300) bins for each scene
         self.audio_feat_dim = config["feat_info"][self.feat_model]["audio_feat_dim"]
-        self.top_k = top_k
-        self.audio_feats_dir = "pretrained" if config["audio_feat_pretrained"] else "finetuned_t{}".format(self.top_k)
+        self.audio_feats_dir = "pretrained" if config["audio_feat_pretrained"] else "finetuned_t_{}".format(self.top_k)
         # self.clip_srt_obj = audio_feat_reader(config, movie_ids)
 
+    def get_feats_masks(self, scenes):
+        # load from pkl file
+        with open(self.audio_feat_path/"audio_feats.pkl", 'rb') as f:
+            audio_feats = pickle.load(f)
+            masks = pickle.load(f)
+        audio_feats = audio_feats[scenes]
+        masks = masks[scenes]
+        return audio_feats, masks
+
+    
     def get_audio_feats(self, scenes):
         """
         Description:
@@ -50,30 +60,19 @@ class audio_dataset(object):
         audio_feats = torch.empty((0, self.audio_feat_dim))
         times = torch.empty(0,)
         for scene in scenes:
-            scene_path = str(str(scene).split("/")[1])
-            with open(self.audio_feat_path/self.audio_feats_dir/scene/(str(scene_path)+".npy"), 'rb') as f:
-                feats = numpy.load(f) # shape: (1)
-                feats = numpy.squeeze(feats, axis=0) # feats shape: (768, t)
-                feats = numpy.transpose(feats, (1, 0)) # feats shape: (t, 768)
-                # time is the value of 2nd dimension of the numpy array give similar shape as srt but here time means a tensor of number of audio features (3rd dimension of numpy array) # multiplied by 1/3.
-                # create a tensor of shape (t, ) and multiply it with 1/3.
-                time = numpy.arange(1,feats.shape[0]+1) * 1/3
-                # print("time.shape: ", time.shape)
-                # print("time", time)
-                # reduce all elements of time with 0.01
+            with open(self.audio_feat_path/self.audio_feats_dir/(str(scene)+".pkl"), 'rb') as f:
+                masks = pickle.load(f)
+                feats = pickle.load(f)
+                feats = feats.squeeze(0).transpose(0, 1)
+                time = numpy.arange(1,masks[0]) * 1/3
                 time = time - 0.01
 
             if len(feats):
-                # print("feats.shape: ", feats.shape)
-                # print("audio_feats.shape: ", audio_feats.shape)
-                audio_feats = torch.cat([audio_feats, torch.tensor(feats)], dim=0)
-                times = torch.cat([times, torch.tensor(time)], dim=0)
+                audio_feats = torch.cat([audio_feats, feats], dim=0)
+                times = torch.cat([times, torch.from_numpy(time)], dim=0)
         audio_feats = audio_feats[:self.max_features, :]
         times = times[:self.max_features]
-        audio_pad_mask[audio_feats.shape[0]:] = 1
-        pad_len = self.max_features - audio_feats.shape[0]
-        # print("pad_len: ", pad_len)
-        audio_feats = torch.cat([audio_feats, torch.zeros(pad_len, audio_feats.shape[-1])])
+        audio_pad_mask[times.shape[0]:] = 1
+        pad_len = self.max_features - times.shape[0]
         times = torch.cat([times, torch.zeros(pad_len)])
-        # print("times:", times.shape)
         return audio_feats, times, audio_pad_mask

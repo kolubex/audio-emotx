@@ -117,7 +117,7 @@ class trainer(object):
                  Moreover joint_character_modeling should be disabled and only character targets must be enabled.
         Check 7: If model number is 1.2 or 2.2, then the user should not select to use srt features and char features. Moreover only scene targets must be enabled.
         """
-        assert(self.config["use_scene_feats"] or self.config["use_char_feats"] or self.config["use_srt_feats"])
+        assert(self.config["use_scene_feats"] or self.config["use_char_feats"] or self.config["use_srt_feats"] or self.config["use_audio_feats"])
         assert(self.config["get_scene_targets"] or self.config["get_char_targets"])
         assert((self.config["model_no"] in [3.0, 4.0] and self.config["use_srt_feats"]) or not self.config["use_srt_feats"])
         assert(self.config["model_no"] not in [3.0, 4.0] or (self.config["model_no"] in [3.0, 4.0] and \
@@ -165,12 +165,12 @@ def fill_model_name(config):
     """
     target_type = {(True, True): "SC", (True, False): "S", (False, True): "C"}
     random_frame_selection = {True: "R", False: "nR"}
-    feat_type = {"emo": 'e', "generic": 'g', "clip": 'c', "resnet50_places": 'r', "resnet50_fer": 'r', "concat": "co", "independent": "in", "mvit_v1": "m"}
+    feat_type = {"emo": 'e', "generic": 'g', "clip": 'c', "resnet50_places": 'r', "resnet50_fer": 'r', "concat": "co", "independent": "in", "mvit_v1": "m","total": "t", "sfx": "s", "vocals": "v", "no_vocals": "nv", "music": "m"}
     srt_feat_type = {True: 'P', False: 'F'}
-    srt_feat_model = {'roberta': 'r', 'clip': 'c'}
+    srt_feat_model = {'roberta': 'r', 'clip': 'c','wavlm':'w'}
     if float(config["model_no"]) in [3.0, 4.0]:
         model_no = '_'.join(str(config["model_no"]).split('.'))
-        model_name = "M{}.L{}.N{}.e{}.t{}.{}S.{}C.{}{}Sr.{}".format(model_no,
+        model_name = "M{}.L{}.N{}.e{}.t{}.{}S.{}C.{}{}Sr.{}.Au.{}".format(model_no,
                                                                     config["num_enc_layers"],
                                                                     config["num_chars"],
                                                                     len(np.format_float_positional(config["lr"]))-2,
@@ -179,7 +179,9 @@ def fill_model_name(config):
                                                                     feat_type[config["face_feat_type"]],
                                                                     feat_type[config["srt_feat_type"]],
                                                                     srt_feat_type[config["srt_feat_pretrained"]]+srt_feat_model[config["srt_feat_model"]],
-                                                                    config["feat_sampling_rate"])
+                                                                    config["feat_sampling_rate"],
+                                                                    feat_type[config["audio_feat_type"]]+srt_feat_model[config["audio_feat_model"]]
+                                                                    )
     else:
         model_no = '_'.join(str(config["model_no"]).split('.'))
         model_name = "M{}.{}.t{}".format(model_no,
@@ -187,8 +189,6 @@ def fill_model_name(config):
                                          config["top_k"] if not config["use_emotic_mapping"] else 26)
     model_name += "_local" if not config["wandb"]["logging"] else ""
     model_name += "_{}".format(config["model_name_suffix"])
-    if(config["use_audio_feats"]):
-        model_name += "_audio"
     return model_name
 
 
@@ -198,7 +198,7 @@ def get_config():
     The model name is also updated. The config is then converted to a dictionary.
     """
     # base_conf = OmegaConf.load("config_copy.yaml")
-    base_conf = OmegaConf.load("config_copy.yaml")
+    base_conf = OmegaConf.load("config_audio_finetuned.yaml")
     overrides = OmegaConf.from_cli()
     updated_conf = OmegaConf.merge(base_conf, overrides)
     OmegaConf.update(updated_conf, "model_name", fill_model_name(updated_conf))

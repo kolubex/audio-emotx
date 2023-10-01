@@ -31,7 +31,8 @@ class finetune_RoBERTa(nn.Module):
         Returns:
             x (list): List of Tensor of shape (batch_size, num_labels) if logits=True, else (batch_size, 768)
         """
-        x = feats[0]; mask = masks[0]
+        x = feats[0]; mask = masks[0] # TODO: why are we only considering the first element?
+        # ! possibly coz the way the RoberTa tokenizer returns stuff is kinda different which you can see in the dataset_srt collate function.
         x = self.RoBERTa(x, mask)
         x = self.logits(x.pooler_output) if logits else x.pooler_output
         return [x]

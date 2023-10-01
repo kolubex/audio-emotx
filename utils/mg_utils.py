@@ -74,9 +74,8 @@ def read_train_val_test_splits(PATH):
     Val: 7
     Test: 10
     """
-    with open(PATH + 'split.json', 'r') as f:
+    with open(PATH + 'split1.json', 'r') as f:
         data_split = json.load(f)
-    data_split["train"].remove("tt1568346")
     # data_split["train"] = ['tt0167404']
     # data_split["val"] = ['tt0167404']
     # data_split["test"] = ['tt0167404']
