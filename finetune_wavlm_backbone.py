@@ -15,6 +15,16 @@ import yaml
 import utils.mg_utils as utils
 import os
 
+# DDP
+import torch.distributed as dist
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
+
+def setup(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
 class trainer(object):
     """
     Trainer class for finetuning RoBERTa for multi-label emotion recognition on the MovieGraphs dataset.
@@ -31,18 +41,24 @@ class trainer(object):
         self.lr = config["lr"]
         data_split = utils.read_train_val_test_splits(self.config["resource_path"])
         self.train_dataset = dastaset_wavlm_backbone(self.config, data_split["train"], "train")
+        # train_sampler = DistributedSampler(self.train_dataset, num_replicas=world_size, rank=rank, shuffle=False, drop_last=False)
         self.emo2id = self.train_dataset.get_emo2id_mapping()
         self.val_dataset = dastaset_wavlm_backbone(self.config, data_split["val"], "val", self.emo2id)
+        # val_sampler = DistributedSampler(self.val_dataset, num_replicas=world_size, rank=rank, shuffle=False, drop_last=False)
         self.train_dataloader = DataLoader(self.train_dataset,
                                            batch_size=self.config["batch_size"],
                                            shuffle=True,
                                            num_workers=self.config['num_cpus'],
                                            collate_fn=self.train_dataset.collate)
+                                        #    sampler=train_sampler,
+                                        #    drop_last=False)
         self.val_dataloader = DataLoader(self.val_dataset,
                                          batch_size=self.config["batch_size"],
                                          shuffle=True,
                                          num_workers=self.config['num_cpus'],
                                          collate_fn=self.val_dataset.collate)
+                                        #  sampler=val_sampler,
+                                        #  drop_last=False)
         self.device = torch.device("cuda:{}".format(self.config["gpu_id"]) if torch.cuda.is_available() else "cpu")
         # self.config["device"] = "cpu"
         self.save_path = Path(self.config["save_path"])/Path(self.config["audio_feat_type"])
