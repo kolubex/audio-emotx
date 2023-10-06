@@ -348,7 +348,7 @@ def get_config():
     """
     Loads the config file and overrides the hyperparameters from the command line.
     """
-    base_conf = OmegaConf.load("config.yaml")
+    base_conf = OmegaConf.load("config_audio_finetuned.yaml")
     overrides = OmegaConf.from_cli()
     updated_conf = OmegaConf.merge(base_conf, overrides)
     return OmegaConf.to_container(updated_conf)
@@ -371,7 +371,7 @@ if __name__ == '__main__':
     num_cls_tokens = 10
     num_general_tokens = 300
     max_num_characters = 4
-
+    create_rem = False
     # Forrest Gump is first in the list with Happy emotion = 310,
     # while Mom is second with worried token = 621...
     char_emo_idx = {"forrest_gump":[('Happy', id2idx(0)+labels25['Happy'])],
@@ -379,82 +379,82 @@ if __name__ == '__main__':
 
     # Load attention scores for scene tokens
     array_dict = load_arrays(base_path=BASE_PATH,
-                             scene_attn_file="forrest_gump_scene009_cont/scene-009_att_new.pt",
-                             scene_bins_file="forrest_gump_scene009_cont/scene-009_scene_bins_new.pt",
-                             char_bins_file="forrest_gump_scene009_cont/scene-009_char_bins_new.pt",
-                             srt_bins_file="forrest_gump_scene009_cont/scene-009_srt_bins_new.pt",
-                             key_pad_mask_file="forrest_gump_scene009_cont/scene-009_keyPadMask.pt",
-                             cls_ndxs_file="forrest_gump_scene009_cont/scene-009_cls_ndxs.pt")
+                             scene_attn_file="attnplots/attn.pt",
+                             scene_bins_file="attnplots/scene_bins.pt",
+                             char_bins_file="attnplots/char_bins.pt",
+                             srt_bins_file="attnplots/srt_bins.pt",
+                             key_pad_mask_file="attnplots/mask.pt",
+                             cls_ndxs_file="attnplots/cls_ndxs.pt")
     compile(char_emo_idx, array_dict, max_num_characters=max_num_characters,
             num_cls_tokens=num_cls_tokens, num_general_tokens=num_general_tokens,
             save_path=SAVE_PATH)
-
-    # Dylan is first in the list with Excited emotion = 313,
-    # while Jamie is second with Happy token = 620...
-    char_emo_idx1 = {"dylan": [('Excited', id2idx(0)+labels25['Excited'])],
-                     "jamie": [('Happy', id2idx(1)+labels25['Happy'])]}
-    
-    # Load attention scores for scene tokens
-    array_dict1 = load_arrays(base_path=BASE_PATH,
-                              scene_attn_file="fwb_scene125_cont/scene-125_att_new.pt",
-                              scene_bins_file="fwb_scene125_cont/scene-125_scene_bins_new.pt",
-                              char_bins_file="fwb_scene125_cont/scene-125_char_bins_new.pt",
-                              srt_bins_file="fwb_scene125_cont/scene-125_srt_bins_new.pt",
-                              key_pad_mask_file="fwb_scene125_cont/scene-125_keyPadMask.pt",
-                              cls_ndxs_file="fwb_scene125_cont/scene-125_cls_ndxs.pt")
-    compile(char_emo_idx1, array_dict1, max_num_characters=max_num_characters,
-            num_cls_tokens=num_cls_tokens, num_general_tokens=num_general_tokens,
-            save_path=SAVE_PATH)
-    
-    # -------------------------------------------------------------------------------------------
-    
-    print("\nGenerating expressiveness score for Top 25 Emotions...")
-    l2_25_attn = torch.load(BASE_PATH/"test_val_t25_att.pt")
-    l2_25_mask = torch.load(BASE_PATH/"test_val_t25_mask.pt")
-    l2_25_labels = torch.load(BASE_PATH/"test_val_sceneTgt_t25.pt")
-    print(f"Shape of attention matrix for Top 25 EMotion: {l2_25_attn.shape}")
-    print(f"Shape of mask matrix for Top 25 Emotion: {l2_25_mask.shape}")
-    print(f"Shape of labels for Top 25 Emotion: {l2_25_labels.shape}")
-    plot_expressiveness(attn_array=l2_25_attn,
-                        mask_array=l2_25_mask,
-                        labels=l2_25_labels,
-                        labels_lst=labels25,
-                        save=True,
-                        save_path=SAVE_PATH,
-                        errorbar=False,
-                        palette='husl',
-                        n_emotions=25,
-                        figsize=(10, 4))
-    
-    # -------------------------------------------------------------------------------------------
-    print("\nGenerating correlation heatmaps for Top 10 Emotions...")
-    ch10_train = torch.load(BASE_PATH/"t10_train_char_targets.pt")
-    ch10_val = torch.load(BASE_PATH/"t10_val_char_targets.pt")
-    sc10_train = torch.load(BASE_PATH/"t10_train_scene_targets.pt")
-    sc10_val = torch.load(BASE_PATH/"t10_val_scene_targets.pt")
-    print("10 character training set shape:", ch10_train.shape)
-    print("10 character validation set shape:", ch10_val.shape)
-    print("10 character training scene shape:", sc10_train.shape)
-    print("10 character validation scene shape:", sc10_val.shape)
-    ch10_arr = np.concatenate((ch10_train, ch10_val), axis=0)
-    sc10_arr = np.concatenate((sc10_train, sc10_val), axis=0)
-    _ = corrHeatMap(sc10_arr, labels10, title="scene_10", save=True,
-                    save_path=SAVE_PATH, rotationx=90, rotationy=0, fontsize=36, figsize=(9, 9))
-    _ = corrHeatMap(ch10_arr, labels10, title="characters_10", save=True,
-                    save_path=SAVE_PATH, rotationx=90, rotationy=0, fontsize=36, figsize=(9, 9))
-    
-    print("\nGenerating correlation heatmaps for Top 25 Emotions...")
-    ch25_train = torch.load(BASE_PATH/"t25_train_char_targets.pt")
-    ch25_val = torch.load(BASE_PATH/"t25_val_char_targets.pt")
-    sc25_train = torch.load(BASE_PATH/"t25_train_scene_targets.pt")
-    sc25_val = torch.load(BASE_PATH/"t25_val_scene_targets.pt")
-    print("25 character training set shape:", ch25_train.shape)
-    print("25 character validation set shape:", ch25_val.shape)
-    print("25 character training scene shape:", sc25_train.shape)
-    print("25 character validation scene shape:", sc25_val.shape)
-    ch25_arr = np.concatenate((ch25_train, ch25_val), axis=0)
-    sc25_arr = np.concatenate((sc25_train, sc25_val), axis=0)
-    _ = corrHeatMap(sc25_arr, labels25, title="scene_25", save_path=SAVE_PATH,
-                    save=True, rotationx=90, rotationy=0, fontsize=32, figsize=(15, 15))
-    _ = corrHeatMap(ch25_arr, labels25, title="characters_25", save_path=SAVE_PATH,
-                    save=True, rotationx=90, rotationy=0, fontsize=32, figsize=(15, 15))
+    if create_rem:
+        # Dylan is first in the list with Excited emotion = 313,
+        # while Jamie is second with Happy token = 620...
+        char_emo_idx1 = {"dylan": [('Excited', id2idx(0)+labels25['Excited'])],
+                        "jamie": [('Happy', id2idx(1)+labels25['Happy'])]}
+        
+        # Load attention scores for scene tokens
+        array_dict1 = load_arrays(base_path=BASE_PATH,
+                                scene_attn_file="fwb_scene125_cont/scene-125_att_new.pt",
+                                scene_bins_file="fwb_scene125_cont/scene-125_scene_bins_new.pt",
+                                char_bins_file="fwb_scene125_cont/scene-125_char_bins_new.pt",
+                                srt_bins_file="fwb_scene125_cont/scene-125_srt_bins_new.pt",
+                                key_pad_mask_file="fwb_scene125_cont/scene-125_keyPadMask.pt",
+                                cls_ndxs_file="fwb_scene125_cont/scene-125_cls_ndxs.pt")
+        compile(char_emo_idx1, array_dict1, max_num_characters=max_num_characters,
+                num_cls_tokens=num_cls_tokens, num_general_tokens=num_general_tokens,
+                save_path=SAVE_PATH)
+        
+        # -------------------------------------------------------------------------------------------
+        
+        print("\nGenerating expressiveness score for Top 25 Emotions...")
+        l2_25_attn = torch.load(BASE_PATH/"test_val_t25_att.pt")
+        l2_25_mask = torch.load(BASE_PATH/"test_val_t25_mask.pt")
+        l2_25_labels = torch.load(BASE_PATH/"test_val_sceneTgt_t25.pt")
+        print(f"Shape of attention matrix for Top 25 EMotion: {l2_25_attn.shape}")
+        print(f"Shape of mask matrix for Top 25 Emotion: {l2_25_mask.shape}")
+        print(f"Shape of labels for Top 25 Emotion: {l2_25_labels.shape}")
+        plot_expressiveness(attn_array=l2_25_attn,
+                            mask_array=l2_25_mask,
+                            labels=l2_25_labels,
+                            labels_lst=labels25,
+                            save=True,
+                            save_path=SAVE_PATH,
+                            errorbar=False,
+                            palette='husl',
+                            n_emotions=25,
+                            figsize=(10, 4))
+        
+        # -------------------------------------------------------------------------------------------
+        print("\nGenerating correlation heatmaps for Top 10 Emotions...")
+        ch10_train = torch.load(BASE_PATH/"t10_train_char_targets.pt")
+        ch10_val = torch.load(BASE_PATH/"t10_val_char_targets.pt")
+        sc10_train = torch.load(BASE_PATH/"t10_train_scene_targets.pt")
+        sc10_val = torch.load(BASE_PATH/"t10_val_scene_targets.pt")
+        print("10 character training set shape:", ch10_train.shape)
+        print("10 character validation set shape:", ch10_val.shape)
+        print("10 character training scene shape:", sc10_train.shape)
+        print("10 character validation scene shape:", sc10_val.shape)
+        ch10_arr = np.concatenate((ch10_train, ch10_val), axis=0)
+        sc10_arr = np.concatenate((sc10_train, sc10_val), axis=0)
+        _ = corrHeatMap(sc10_arr, labels10, title="scene_10", save=True,
+                        save_path=SAVE_PATH, rotationx=90, rotationy=0, fontsize=36, figsize=(9, 9))
+        _ = corrHeatMap(ch10_arr, labels10, title="characters_10", save=True,
+                        save_path=SAVE_PATH, rotationx=90, rotationy=0, fontsize=36, figsize=(9, 9))
+        
+        print("\nGenerating correlation heatmaps for Top 25 Emotions...")
+        ch25_train = torch.load(BASE_PATH/"t25_train_char_targets.pt")
+        ch25_val = torch.load(BASE_PATH/"t25_val_char_targets.pt")
+        sc25_train = torch.load(BASE_PATH/"t25_train_scene_targets.pt")
+        sc25_val = torch.load(BASE_PATH/"t25_val_scene_targets.pt")
+        print("25 character training set shape:", ch25_train.shape)
+        print("25 character validation set shape:", ch25_val.shape)
+        print("25 character training scene shape:", sc25_train.shape)
+        print("25 character validation scene shape:", sc25_val.shape)
+        ch25_arr = np.concatenate((ch25_train, ch25_val), axis=0)
+        sc25_arr = np.concatenate((sc25_train, sc25_val), axis=0)
+        _ = corrHeatMap(sc25_arr, labels25, title="scene_25", save_path=SAVE_PATH,
+                        save=True, rotationx=90, rotationy=0, fontsize=32, figsize=(15, 15))
+        _ = corrHeatMap(ch25_arr, labels25, title="characters_25", save_path=SAVE_PATH,
+                        save=True, rotationx=90, rotationy=0, fontsize=32, figsize=(15, 15))

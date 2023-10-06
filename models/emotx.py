@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import numpy as np
 
 class FramePositionalEncoding(nn.Module):
     """
@@ -128,9 +128,7 @@ class EmoTx(nn.Module):
         """
 
         # Unpacking the features, and masks from the arguments
-        # char_feats, scene_feat, srt_feats, char_frames, scene_frames, srt_bins = feats
         char_feats, scene_feat, srt_feats, audio_feats, char_frames, scene_frames, srt_bins, audio_bins = feats
-        # char_feat_masks, scene_feat_masks, srt_mask, char_target_mask, scene_target_mask = masks
         char_feat_masks, scene_feat_masks, srt_mask, audio_mask, char_target_mask, scene_target_mask = masks
         target_masks = [char_target_mask, scene_target_mask] # Will be used to filter the logits for masked characters.
 
@@ -203,9 +201,22 @@ class EmoTx(nn.Module):
         feat = self.layer_norm(feat)
 
         # Pass the prepared input to transformer encoder
+        out1 = self.encoder.layers[0](feat,src_mask=self.src_mask.to(feat.device), src_key_padding_mask=mask)
+        out = self.encoder.layers[0].self_attn(feat,feat,feat, attn_mask=self.src_mask.to(feat.device), key_padding_mask=mask)[1]
+        # save attn1 as a numpy array
+        torch.save(out.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/attn1.pt')
+        torch.save(char_frames.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/char_bins.pt')
+        torch.save(scene_frames.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/scene_bins.pt')
+        torch.save(srt_bins.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/srt_bins.pt')
+        torch.save(audio_bins.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/audio_bins.pt')
+        out = self.encoder.layers[1].self_attn(out1, out1, out1, attn_mask=self.src_mask.to(feat.device), key_padding_mask=mask)[1]
+        # save attn2 as a .pt file
+        torch.save(out.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/attn.pt')
+        torch.save(mask.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/mask.pt')
+        torch.save(cls_ndxs.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/cls_ndxs.pt')
+        out1 = out1.detach().cpu().numpy()
+        del out1
         out = self.encoder(feat, mask=self.src_mask.to(feat.device), src_key_padding_mask=mask)
-
-        # Filter the embeddings coresponding to CLS tokens.
         cls_heads = out[:, cls_ndxs, :]
         cls_heads = cls_heads.reshape(-1, self.num_chars+1, self.num_labels, self.hidden_dim)
 

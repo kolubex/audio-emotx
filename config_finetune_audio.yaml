@@ -3,6 +3,7 @@ data_path: /ssd_scratch/cvit/kolubex/data
 resource_path: /ssd_scratch/cvit/kolubex/data/MovieGraph/resources/
 clip_srts_path: /ssd_scratch/cvit/kolubex/data/MovieGraph/srt/clip_srt/
 clip_wavlm_feats_path: /ssd_scratch/cvit/kolubex/data/audio/wavlm_feats/
+clip_audio_path: /ssd_scratch/cvit/kolubex/mg/mg_videos/
 emotic_mapping_path: /ssd_scratch/cvit/kolubex/data/emotic_mapping.json
 pkl_path: /ssd_scratch/cvit/kolubex/data/MovieGraph/mg/py3loader/
 save_path: /ssd_scratch/cvit/kolubex/checkpoints/
@@ -24,7 +25,7 @@ track_name_metadata_dir: "track_names/metadata"
 scene_feat_type: "mvit_v1" # "resnet50_places" # "generic"
 face_feat_type: "resnet50_fer" # "emo" # "generic"
 srt_feat_type: "independent" # "concat"
-audio_feat_type: "vocals" # "vocals", "no_vocals", "sfx", "music", "total"
+audio_feat_type: "total" # "vocals", "no_vocals", "sfx", "music", "total"
 srt_feat_model: "roberta"
 audio_feat_model: "wavlm"
 pkl_name: "2017-11-02-51-7637_py3.pkl"
@@ -50,14 +51,14 @@ vid_fps: 23.976023976023978
 max_possible_vid_frame_no: 17500
 character_name_selection_threshold: 0.5
 target_prediction_threshold: 0.5
-top_k: 25 # 25
+top_k: 10 # 25
 feat_sampling_rate: 8
 num_chars: 4
 num_enc_layers: 2
 max_feats: 300
 max_srt_feats: 300
 max_audio_feats: 300
-batch_size: 8
+batch_size: 1
 num_cpus: 4
 epochs: 35
 lr: 0.0001
@@ -66,7 +67,7 @@ seed: 0
 
 # WandB related variables
 wandb:
-  logging: True
+  logging: False
   project: "emotx_trail" # WandB project name
   entity: "lakshmipathi-balaji" # WandB username
   sweeps: False
@@ -104,5 +105,11 @@ wavlm_finetune:
   stride1: 17
   padding1: 1
   conv_type: "avg"
+  max_audio_len: 15
+  hugging_face_cache_path: /ssd_scratch/cvit/kolubex/.cache/
+  lr1: 0.0001
+  lr2: 0.00001
+
+max_audio_len: 15
 
 original_emotx_version: False

@@ -41,7 +41,7 @@ class audio_feat_extraction(object):
             print("Selected finetuned WavLM model for top-{} emotions".format(self.top_k))
             self.audio_feat_save_path = self.audio_feat_save_path/("finetuned_t_{}".format(self.top_k))
             model_name = Path("WavLM_finetuned_t{}_scene.pt".format(self.top_k))
-            self.model = featExtract_finetuned_WavLM(self.top_k, Path(config["saved_model_path"])/Path(config["audio_feat_type"]/model_name))
+            self.model = featExtract_finetuned_WavLM(Path(config["saved_model_path"])/Path(config["audio_feat_type"]/model_name))
         self.model = self.model.eval().to(self.device)
 
     def save_feats(self, save_path, scene, feats,masks):

@@ -1,5 +1,4 @@
 
-import pickle
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -54,7 +53,7 @@ class finetune_WavLM(nn.Module):
         return [activations]
     
 class featExtract_finetuned_WavLM(nn.Module):
-    def __init__(self, num_labels, model_path):
+    def __init__(self, model_path):
         super(featExtract_finetuned_WavLM, self).__init__()
         self.model = self.get_model(model_path)
 
@@ -65,46 +64,3 @@ class featExtract_finetuned_WavLM(nn.Module):
 
     def forward(self, feats, masks,logits=False):
         return self.model(feats, masks, logits=False)
-        # ! please uncomment the above line and remove things below after you retrain the 
-        # ! total model with new forward function which is correct now. Coz using gpu minutes and burning trees is 
-        # ! is not good for health. lol
-        # activations = []
-        # feats = feats[0]; masks = masks[0]
-        # x = self.model.conv1_1x1(feats)
-        # x = self.model.gelu(x)
-        # x = self.model.conv2_1x1(x)
-        # x = self.model.gelu(x)
-        # x = self.model.conv1(x)
-        # x = self.model.gelu(x)
-        # x = self.model.conv3_1x1(x)
-        # x = self.model.gelu(x)
-        # activations = x
-        # return [activations]
-    
-"""
-class featExtract_pretrained_RoBERTa(nn.Module):
-    "
-    #     TODO: Lets do this kinda later.
-    This is a wrapper model used to extract features from the pretrained RoBERTa model.
-    "
-    def __init__(self, hf_cache_dir):
-        "
-        Args:
-            hf_cache_dir (str): Path to the cache directory for the huggingface transformers
-        "
-        super(featExtract_pretrained_RoBERTa, self).__init__()
-        self.RoBERTa = RobertaModel.from_pretrained("roberta-base", cache_dir=hf_cache_dir)
-
-    def forward(self, feat, mask):
-        "
-        Args:
-            feat (list): List of tensors with token-ids of shape (batch_size, seq_len, feat_dim)
-            mask (list): List of tensors of shape (batch_size, seq_len)
-
-        Returns:
-            pooler_output (tensor): Tensor of shape (batch_size, 768)
-        "
-        x = self.RoBERTa(feat, mask)
-        return x.pooler_output
-
-"""
