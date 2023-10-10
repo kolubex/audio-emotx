@@ -3,7 +3,7 @@ data_path: /ssd_scratch/cvit/kolubex/data
 resource_path: /ssd_scratch/cvit/kolubex/data/MovieGraph/resources/
 clip_srts_path: /ssd_scratch/cvit/kolubex/data/MovieGraph/srt/clip_srt/
 clip_wavlm_feats_path: /ssd_scratch/cvit/kolubex/data/audio/wavlm_feats/
-clip_audio_path: /ssd_scratch/cvit/kolubex/mg/mg_videos/
+clip_audio_path: /ssd_scratch/cvit/kolubex/data/audios/
 emotic_mapping_path: /ssd_scratch/cvit/kolubex/data/emotic_mapping.json
 pkl_path: /ssd_scratch/cvit/kolubex/data/MovieGraph/mg/py3loader/
 save_path: /ssd_scratch/cvit/kolubex/checkpoints/
@@ -51,7 +51,7 @@ vid_fps: 23.976023976023978
 max_possible_vid_frame_no: 17500
 character_name_selection_threshold: 0.5
 target_prediction_threshold: 0.5
-top_k: 10 # 25
+top_k: 25 # 10
 feat_sampling_rate: 8
 num_chars: 4
 num_enc_layers: 2

@@ -26,7 +26,7 @@ class audio_feat_extraction(object):
             config (dict): The config file with all the hyperparameters.
         """
         self.config = config
-        self.audio_path = Path(config["clip_audio_path"])
+        self.audio_path = Path(config["clip_audio_path"])/Path(config["audio_feat_type"])
         self.audio_feat_save_path = Path(config["save_feats_path"])/Path(config["audio_feat_dir"])/Path(config["audio_feat_type"])
         # if self.audio_feat_save_path directory exists remove it and create a new one
         if self.audio_feat_save_path.exists():
@@ -76,37 +76,41 @@ class audio_feat_extraction(object):
                 print("Started extracting features for: {}".format(movie), end=" | ")
                 # movie -> scenen_folder/scene_name.npy
                 # list all audio files that end with .wav if for a scene .mp4 file .wav doesn't exist then convert that to .wav and then extract features
-                all_scene_wav_files = []
-                for filename in os.listdir(self.audio_path/movie):
-                    if filename.endswith(".wav") or filename.endswith(".mp4"):
-                        wav_filename = filename.replace(".mp4", ".wav")
-                        mp4_filepath = os.path.join(self.audio_path/movie, filename)
-                        wav_filepath = os.path.join(self.audio_path/movie, wav_filename)
-                        
-                        # If .wav file doesn't exist, convert .mp4 to .wav
-                        if not os.path.exists(wav_filepath):
-                            self.convert_mp4_to_wav(mp4_filepath, wav_filepath)
-                        all_scene_wav_files.append(wav_filepath)
+                all_scene_wav_files = {}
+                # for scene1 => list all files with scene1_chunk1.wav and scene1_chunk2.wav if existing and such for all scenes
+                for scene in os.listdir(self.audio_path/movie):
+                    all_scene_wav_files[scene[:-11]] = []
+                    # list all files that start with scene[:-11]
+                    for audio in os.listdir(self.audio_path/movie):
+                        if audio.startswith(scene[:-11]):
+                            all_scene_wav_files[scene[:-11]].append(self.audio_path/movie/audio)
                 
                 # Extract features for all the audio files in the scene
-                for audio in all_scene_wav_files:
+                for scene in list(all_scene_wav_files.keys()):
                     times, feats = list(), list()
-                    try:
-                        if audio and str(audio).endswith(".wav"):
-                            audio_tensor = torchaudio.load(audio)[0].to(self.device)
-                            # length of audio in seconds
-                            feat_mask = audio_tensor.shape[1]//16000
-                            # take first 15 seconds of audio
-                            feat_mask = min(feat_mask, 40)
-                            audio_tensor = audio_tensor[:,:feat_mask*16000]
-                            print(audio_tensor.shape)
-                            feats = self.model(audio_tensor.unsqueeze(0),[feat_mask],logits=False)[0]
-                            feats = feats.detach().cpu()
-                            feat_file_name = Path(audio).stem
-                            self.save_feats(save_path, feat_file_name, feats, feat_mask)
-                    except:
-                        print("Error in extracting features for: {}".format(audio))
-                        continue
+                    audio_len = 0
+                    audio_wise_feats, audio_wise_times = list(), list()
+                    for i, audio in enumerate(all_scene_wav_files[scene]):
+                        try:
+                            if str(audio).endswith(".wav"):
+                                audio_tensor = torchaudio.load(audio)[0].to(self.device)
+                                # length of audio in seconds
+                                audio_len = audio_tensor.shape[1]//16000
+                                # take first 15 seconds of audio
+                                audio_len = min(audio_len, 35)
+                                audio_tensor = audio_tensor[:,:audio_len*16000]
+                                feats = self.model(audio_tensor.unsqueeze(0),[audio_len],logits=False)[0]
+                                audio_wise_feats.append(feats.detach().cpu())
+                                audio_wise_times.append(audio_len)
+                        except:
+                            print("Error in extracting features for: {}".format(audio))
+                            continue
+                    # concatenate all the audio_wise_feats
+                    feats = torch.cat(audio_wise_feats, dim=1)
+                    # times is (len(audio_wise_times))*35 + audio_wise_times[-1]
+                    times = [35*(len(audio_wise_times)-1) + audio_wise_times[-1]]
+                    feat_file_name = str(Path(audio).stem)[:-7]
+                    self.save_feats(save_path, feat_file_name, feats, times)
                 print("Completed in {:.4f} sec.".format(time.perf_counter()-st))
             print("Finished extraction in {:.4f} sec.".format(time.perf_counter()-pst))
 
@@ -118,6 +122,7 @@ def get_config():
     base_conf = OmegaConf.load("config_finetune_audio.yaml")
     overrides = OmegaConf.from_cli()
     updated_conf = OmegaConf.merge(base_conf, overrides)
+    return updated_conf
 
 
 if __name__ == "__main__":

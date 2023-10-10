@@ -13,7 +13,7 @@ class clip_audio_backbone(object):
             config (dict): Configuration file.
             movie_ids (list): List of movie ids.
         """
-        self.CLIP_AUDIO_PATH = Path(config['clip_audio_path'])
+        self.CLIP_AUDIO_PATH = Path(config['clip_audio_path']) / Path(config["audio_feat_type"])
         self.movie_ids = movie_ids
         self.audios = dict()
         self.time_audio = dict()
@@ -27,17 +27,10 @@ class clip_audio_backbone(object):
         """
         for movie_id in self.movie_ids:
             total_files = os.listdir(self.CLIP_AUDIO_PATH/movie_id)
-            # filter out files that end with .mp4
-            video_files = [file for file in total_files if file.endswith(".mp4")]
-            for video_file in video_files:
-                # if .wav of video file is not present, convert it to .wav
-                audio_file = video_file[:-4]+".wav"
-                video_path = self.CLIP_AUDIO_PATH/movie_id/video_file
+            audio_files = [file for file in total_files if file.endswith("chunk1.wav")]
+            for audio_file in audio_files:
                 audio_path = self.CLIP_AUDIO_PATH/movie_id/audio_file
-                if audio_file not in total_files:
-                    # convert it such that has 1 channel and 16kHz sampling rate
-                    os.system("ffmpeg -i {} -ac 1 -ar 16000 {}".format(video_path, audio_path))
-                scene_name = ".".join(audio_file.split('.')[:-1]) # as scene_names have '.'
+                scene_name = audio_file.split("_")[0]
                 key = Path(movie_id)/Path(scene_name)
                 self.audios[key] = audio_path
 
