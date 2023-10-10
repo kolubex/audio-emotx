@@ -58,7 +58,7 @@ max_feats: 300
 max_srt_feats: 300
 max_audio_feats: 300
 batch_size: 8
-num_cpus: 4
+num_cpus: 1
 epochs: 35
 lr: 0.0001
 gpu_id: 0
