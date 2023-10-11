@@ -89,6 +89,8 @@ class trainer(object):
             
             # Combine the parameter groups
             param_groups = param_groups1 + param_groups2
+            print("param_groups1: {}".format(param_groups1))
+            print("param_groups2: {}".format(param_groups2))
             optimizer = optim.Adam(param_groups)
         else:
             optimizer = optim.Adam(self.model.parameters(), lr=self.config["lr"])
@@ -108,7 +110,7 @@ class trainer(object):
             wandb.run.name = self.config["model_name"]
         optimizer = self.create_optimizer()
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.9, patience=100, threshold=0.001)
-        criterion = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor(self.config["pos_weight"][str(self.train_dataset.top_k)]).to(self.device))
+        criterion = nn.BCEWithLogitsLoss()
         train(epochs=self.config['epochs'], num_labels=self.train_dataset.top_k,
               train_dataloader=self.train_dataloader, val_dataloader=self.val_dataloader,
               device=self.device, emo2id=self.emo2id, model=self.model, optimizer=optimizer, scheduler=scheduler,

@@ -184,6 +184,7 @@ class dastaset_wavlm_backbone(Dataset):
             "masks": [padded_batch['masks']],
             "targets": [targets]
         }
+        print(f"collated_data['feats'][0].shape: {collated_data['feats'][0].shape}")
         return collated_data
 
 

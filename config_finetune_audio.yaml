@@ -105,11 +105,11 @@ wavlm_finetune:
   stride1: 17
   padding1: 1
   conv_type: "avg"
-  max_audio_len: 15
+  max_audio_len: 35
   hugging_face_cache_path: /ssd_scratch/cvit/kolubex/.cache/
-  lr1: 0.0001
-  lr2: 0.00001
+  lr1: 0.00001
+  lr2: 0.0001
 
-max_audio_len: 15
+max_audio_len: 35
 
 original_emotx_version: False
