@@ -36,11 +36,13 @@ class audio_feat_extraction(object):
         # self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base", cache_dir=config["hugging_face_cache_path"])
         self.device = torch.device("cuda:{}".format(config["gpu_id"]) if torch.cuda.is_available() else 'cpu')
         # self.device = torch.device("cpu")
+        # self.device = torch.device("cpu")
         if not config["audio_feat_pretrained"]:
             print("Selected finetuned WavLM model for top-{} emotions".format(self.top_k))
             self.audio_feat_save_path = self.audio_feat_save_path/("finetuned_t_{}".format(self.top_k))
             model_name = Path("WavLM_finetuned_backbone_t{}_scene.pt".format(self.top_k))
             self.model = featExtract_finetuned_WavLM(Path(config["saved_model_path"])/Path(config["audio_feat_type"]/model_name))
+        
         self.model = self.model.eval().to(self.device)
 
     def save_feats(self, save_path, scene, feats,masks):
@@ -81,7 +83,9 @@ class audio_feat_extraction(object):
                 for scene in os.listdir(self.audio_path/movie):
                     all_scene_wav_files[scene[:-11]] = []
                     # list all files that start with scene[:-11]
-                    for audio in os.listdir(self.audio_path/movie):
+                    list_of_files = os.listdir(self.audio_path/movie)
+                    list_of_files.sort()
+                    for audio in list_of_files:
                         if audio.startswith(scene[:-11]):
                             all_scene_wav_files[scene[:-11]].append(self.audio_path/movie/audio)
                 
@@ -127,6 +131,6 @@ def get_config():
 
 if __name__ == "__main__":
     cnfg = get_config()
-    mvs = os.listdir(cnfg["clip_audio_path"])
     obj = audio_feat_extraction(cnfg)
+    mvs = os.listdir(obj.audio_path)
     obj.extract_features(mvs)

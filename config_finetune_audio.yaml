@@ -28,7 +28,7 @@ srt_feat_type: "independent" # "concat"
 audio_feat_type: "total" # "vocals", "no_vocals", "sfx", "music", "total"
 srt_feat_model: "roberta"
 audio_feat_model: "wavlm"
-pkl_name: "2017-11-02-51-7637_py3.pkl"
+pkl_name: "all_movies.pkl"
 
 # Boolean variables
 use_scene_feats: True
@@ -59,9 +59,9 @@ max_feats: 300
 max_srt_feats: 300
 max_audio_feats: 300
 batch_size: 1
-num_cpus: 4
+num_cpus: 0
 epochs: 35
-lr: 0.0001
+lr: 0.00001
 gpu_id: 0
 seed: 0
 
@@ -107,9 +107,19 @@ wavlm_finetune:
   conv_type: "avg"
   max_audio_len: 35
   hugging_face_cache_path: /ssd_scratch/cvit/kolubex/.cache/
-  lr1: 0.00001
-  lr2: 0.0001
-
+  lr1: 0.000001
+  lr2: 0.00001
+  num_wavlm_layers : 3
+  lora:
+    r : 32
+    alpha: 32
+    target_modules : ["model.encoder.layers.*.attention.k_proj", "model.encoder.layers.*.attention.k_proj"]
+    dropout: 0.1
+    modules_to_save : ["conv1d", "linear"]
+    # layers_pattern : "model.encoder.layers.*.attention.k_proj"
+world_size: 3
+rank: 0
 max_audio_len: 35
-
+wavlm_finetuning: True
 original_emotx_version: False
+num_wavlm_layers : 3

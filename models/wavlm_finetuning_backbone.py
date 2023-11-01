@@ -13,7 +13,14 @@ class finetune_WavLM_backbone(nn.Module):
         self.conv_type = config["conv_type"] if conv_type != 'avg' else conv_type
         self.top_k = config["top_k"]
         self.model = WavLMModel.from_pretrained("microsoft/wavlm-base-plus", cache_dir=config["hugging_face_cache_path"])
-        self.model.train()
+        # self.model.train()
+        # Only want few layers in training
+        # self.model.encoder.layers[12 - config["num_wavlm_layers"]:12].train()
+        # all other layers are frozen
+        # for param in self.model.parameters():
+        #     param.requires_grad = False
+        #     for param in self.model.encoder.layers[12 - config["num_wavlm_layers"]:12].attention.k_proj.parameters() or self.model.encoder.layers[12 - config["num_wavlm_layers"]:12].attention.v_proj.parameters():
+        #         param.requires_grad = True 
         self.conv1d = nn.Conv1d(768, 512, kernel_size=self.kernel_size1, stride=self.stride1, padding=self.padding1)
         self.gelu = nn.GELU()
         self.linear = nn.Linear(512, self.top_k)

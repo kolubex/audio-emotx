@@ -27,13 +27,17 @@ class clip_audio_backbone(object):
         """
         for movie_id in self.movie_ids:
             total_files = os.listdir(self.CLIP_AUDIO_PATH/movie_id)
-            audio_files = [file for file in total_files if file.endswith("chunk1.wav")]
+            audio_files = [file for file in total_files if file.endswith(".wav")]
             for audio_file in audio_files:
                 audio_path = self.CLIP_AUDIO_PATH/movie_id/audio_file
                 scene_name = audio_file.split("_")[0]
                 key = Path(movie_id)/Path(scene_name)
-                self.audios[key] = audio_path
-
+                # self.audios[key].append(audio_path)
+                # if key not in self.audios.keys then add it and then append the audio_path to the list
+                if key not in self.audios.keys():
+                    self.audios[key] = [audio_path]
+                else:
+                    self.audios[key].append(audio_path)                    
     
     def get_audio(self, movie_scene_id):
         """

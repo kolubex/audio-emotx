@@ -151,7 +151,11 @@ class dastaset_wavlm_backbone(Dataset):
         audio_feats = []
         masks = []
         for audio_path in audio_paths:
-            audio, sr = torchaudio.load(audio_path[0])
+            # choose a number in range 0,len(audio_path) -1, and load that audio
+            rand_ndx = torch.randint(0, len(audio_path), (1,))
+            # print(audio_path[rand_ndx])
+            audio_path = audio_path[rand_ndx]
+            audio, sr = torchaudio.load(audio_path)
             audio = audio.squeeze(0)
             # pad it to self.max_audio_len seconds
             if audio.shape[0] < self.max_audio_len*sr:
@@ -184,7 +188,6 @@ class dastaset_wavlm_backbone(Dataset):
             "masks": [padded_batch['masks']],
             "targets": [targets]
         }
-        print(f"collated_data['feats'][0].shape: {collated_data['feats'][0].shape}")
         return collated_data
 
 
@@ -204,7 +207,8 @@ class dastaset_wavlm_backbone(Dataset):
         audio_feats = []
         for scene in scenes:
             # print(self.clip_audios.get_audio(scene)[0])
-            audio_feats.append(self.clip_audios.get_audio(scene)[0])
+            # audio_feats.append(self.clip_audios.get_audio(scene)[0]) => if you are passing one audio
+            audio_feats = self.clip_audios.get_audio(scene)[0]
         return (audio_feats, target)
 
     def __len__(self):
