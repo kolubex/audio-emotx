@@ -60,7 +60,7 @@ max_srt_feats: 300
 max_audio_feats: 300
 batch_size: 1
 num_cpus: 0
-epochs: 35
+epochs: 50
 lr: 0.00001
 gpu_id: 0
 seed: 0
@@ -113,10 +113,12 @@ wavlm_finetune:
   lora:
     r : 32
     alpha: 32
-    target_modules : ["model.encoder.layers.*.attention.k_proj", "model.encoder.layers.*.attention.k_proj"]
+    # target_modules : ["model.encoder.layers.%.attention.q_proj", "model.encoder.layers.%.attention.v_proj","model.encoder.layers.%.attention.k_proj"]
+    target_modules : "model.encoder.layers.%.attention.k_proj@model.encoder.layers.%.attention.q_proj@model.encoder.layers.%.attention.v_proj"
     dropout: 0.1
-    modules_to_save : ["conv1d", "linear"]
-    # layers_pattern : "model.encoder.layers.*.attention.k_proj"
+    modules_to_save : "head_conv1d@head_linear@head_conv1@head_conv2@head_conv3"
+    # modules_to_save : "head_conv1d"
+    # layers_pattern : "model.encoder.layers.%.attention.k_proj"
 world_size: 3
 rank: 0
 max_audio_len: 35

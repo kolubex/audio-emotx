@@ -13,17 +13,13 @@ class finetune_WavLM_backbone(nn.Module):
         self.conv_type = config["conv_type"] if conv_type != 'avg' else conv_type
         self.top_k = config["top_k"]
         self.model = WavLMModel.from_pretrained("microsoft/wavlm-base-plus", cache_dir=config["hugging_face_cache_path"])
-        # self.model.train()
-        # Only want few layers in training
-        # self.model.encoder.layers[12 - config["num_wavlm_layers"]:12].train()
-        # all other layers are frozen
-        # for param in self.model.parameters():
-        #     param.requires_grad = False
-        #     for param in self.model.encoder.layers[12 - config["num_wavlm_layers"]:12].attention.k_proj.parameters() or self.model.encoder.layers[12 - config["num_wavlm_layers"]:12].attention.v_proj.parameters():
-        #         param.requires_grad = True 
-        self.conv1d = nn.Conv1d(768, 512, kernel_size=self.kernel_size1, stride=self.stride1, padding=self.padding1)
+        self.head_conv1d = nn.Conv1d(512, 512, kernel_size=self.kernel_size1, stride=self.stride1, padding=self.padding1)
         self.gelu = nn.GELU()
-        self.linear = nn.Linear(512, self.top_k)
+        # # ! adding this layers to make a comparision in between head of lora and only head
+        self.head_conv1 = nn.Conv1d(768,512, kernel_size=1, stride=1, padding=0)
+        self.head_conv2 = nn.Conv1d(512,512, kernel_size=1, stride=1, padding=0)
+        self.head_conv3 = nn.Conv1d(512,512, kernel_size=1, stride=1, padding=0)
+        self.head_linear = nn.Linear(512, self.top_k)
 
     def add_padding(self, audio_feats):
         """
@@ -59,13 +55,19 @@ class finetune_WavLM_backbone(nn.Module):
         seq_len = seq_len[0]
         x,extract_feats = self.model(feats, return_dict=False)
         x = self.add_padding(x)
-        x = self.conv1d(x["audio_feats"])
+        x = self.head_conv1(x["audio_feats"])
+        x = self.gelu(x)
+        x = self.head_conv2(x)
+        x = self.gelu(x)
+        x = self.head_conv1d(x)
+        x = self.gelu(x)
+        x = self.head_conv3(x)
         x = self.gelu(x)
         if logits:
             denominator = (seq_len).to(x.device).unsqueeze(-1)
             denominator[denominator == 0] = 300
             x = torch.sum(x,dim=2)/denominator
-            x = self.linear(x)
+            x = self.head_linear(x)
             activations = x
         else:
             activations = x

@@ -40,7 +40,8 @@ class audio_feat_extraction(object):
         if not config["audio_feat_pretrained"]:
             print("Selected finetuned WavLM model for top-{} emotions".format(self.top_k))
             self.audio_feat_save_path = self.audio_feat_save_path/("finetuned_t_{}".format(self.top_k))
-            model_name = Path("WavLM_finetuned_backbone_t{}_scene.pt".format(self.top_k))
+            # model_name = Path("WavLM_finetuned_backbone_t{}_scene.pt".format(self.top_k))
+            model_name = Path("Wa_fi_ba_lo_t25_bh_3_l_0.0001_lr_total_au_k_v_q_scene.pt")
             self.model = featExtract_finetuned_WavLM(Path(config["saved_model_path"])/Path(config["audio_feat_type"]/model_name))
         
         self.model = self.model.eval().to(self.device)
