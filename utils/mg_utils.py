@@ -8,7 +8,6 @@ matplotlib.use('Agg')
 
 import json
 import matplotlib.pyplot as plt
-import networkx as nx
 import numpy as np
 import pickle
 import sys
@@ -74,7 +73,7 @@ def read_train_val_test_splits(PATH):
     Val: 7
     Test: 10
     """
-    with open(PATH + 'split1.json', 'r') as f:
+    with open(PATH + 'split.json', 'r') as f:
         data_split = json.load(f)
     # data_split["train"] = ['tt0167404']
     # data_split["val"] = ['tt0167404']

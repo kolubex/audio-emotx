@@ -24,7 +24,6 @@ import numpy as np
 from sklearn import metrics
 import scipy.sparse as sp
 import warnings
-import networkx as nx
 from copy import deepcopy
 
 try:

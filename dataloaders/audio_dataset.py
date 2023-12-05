@@ -75,4 +75,7 @@ class audio_dataset(object):
         audio_pad_mask[times.shape[0]:] = 1
         pad_len = self.max_features - times.shape[0]
         times = torch.cat([times, torch.zeros(pad_len)])
+        # pad audio features to max_features audio_feats shape (num_features, audio_feat_dim)
+        audio_feats_pad_len = self.max_features - audio_feats.shape[0]
+        audio_feats = torch.vstack([audio_feats, torch.zeros(audio_feats_pad_len, self.audio_feat_dim)])
         return audio_feats, times, audio_pad_mask
