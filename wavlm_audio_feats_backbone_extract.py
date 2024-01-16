@@ -37,12 +37,13 @@ class audio_feat_extraction(object):
         self.device = torch.device("cuda:{}".format(config["gpu_id"]) if torch.cuda.is_available() else 'cpu')
         # self.device = torch.device("cpu")
         # self.device = torch.device("cpu")
+        config["wavlm_finetune"]["top_k"] = config["top_k"]
         if not config["audio_feat_pretrained"]:
             print("Selected finetuned WavLM model for top-{} emotions".format(self.top_k))
             self.audio_feat_save_path = self.audio_feat_save_path/("finetuned_t_{}".format(self.top_k))
             # model_name = Path("WavLM_finetuned_backbone_t{}_scene.pt".format(self.top_k))
-            model_name = Path("Wa_fi_ba_lo_t25_bh_3_l_0.0001_lr_total_au_k_v_q_scene.pt")
-            self.model = featExtract_finetuned_WavLM(Path(config["saved_model_path"])/Path(config["audio_feat_type"]/model_name))
+            model_name = Path("Wa_fi_ba_lo_t25_bh_3_l_1e-05_lr_32_r_vocals_au_v_q_scene.pt")
+            self.model = featExtract_finetuned_WavLM(self.config['wavlm_finetune'],Path(config["saved_model_path"])/Path(config["audio_feat_type"])/model_name)
         
         self.model = self.model.eval().to(self.device)
 
@@ -70,7 +71,7 @@ class audio_feat_extraction(object):
             movies (list): List of movies for which the features are to be extracted.
         """
         pst = time.perf_counter()
-        movies = ["tt1013753"]
+        # movies = ["tt0212338"]
         for movie in movies:
             save_path = self.audio_feat_save_path/movie
             if not os.path.exists(save_path):
@@ -89,7 +90,6 @@ class audio_feat_extraction(object):
                     for audio in list_of_files:
                         if audio.startswith(scene[:-11]):
                             all_scene_wav_files[scene[:-11]].append(self.audio_path/movie/audio)
-                
                 # Extract features for all the audio files in the scene
                 for scene in list(all_scene_wav_files.keys()):
                     times, feats = list(), list()
@@ -100,8 +100,10 @@ class audio_feat_extraction(object):
                             if str(audio).endswith(".wav"):
                                 audio_tensor = torchaudio.load(audio)[0].to(self.device)
                                 # length of audio in seconds
-                                audio_len = audio_tensor.shape[1]//16000
-                                # take first 15 seconds of audio
+                                if("chunk" in str(audio)):
+                                    audio_len = 35
+                                else:
+                                    audio_len = audio_tensor.shape[1]//16000
                                 audio_len = min(audio_len, 35)
                                 audio_tensor = audio_tensor[:,:audio_len*16000]
                                 feats = self.model(audio_tensor.unsqueeze(0),[audio_len],logits=False)[0]

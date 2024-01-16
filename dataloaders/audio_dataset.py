@@ -63,16 +63,31 @@ class audio_dataset(object):
             with open(self.audio_feat_path/self.audio_feats_dir/(str(scene)+".pkl"), 'rb') as f:
                 masks = pickle.load(f)
                 feats = pickle.load(f)
-                feats = feats.squeeze(0).transpose(0, 1)
-                time = numpy.arange(1,masks[0]) * 1/3
+                feats = feats.transpose(0, 1)
+                fps_3_time = feats.shape[0]
+                # print("fps_3_time", fps_3_time)
+                time = numpy.arange(1,fps_3_time) * 1/3
+                # print("time.shape", time.shape)
                 time = time - 0.01
 
             if len(feats):
                 audio_feats = torch.cat([audio_feats, feats], dim=0)
                 times = torch.cat([times, torch.from_numpy(time)], dim=0)
+        times = times[:int(self.max_features)]
+        audio_feats = audio_feats[:int(self.max_features), :]
+        # print("times.shape", times.shape)
+        # print("audio_feats.shape_before", audio_feats.shape)
+        audio_pad_mask[(times.shape[0]):] = 1
+        pad_len = int(self.max_features - (times.shape[0]))
+        # print("pad_len", pad_len)
+        # print("audio_feats_before.shape", audio_feats.shape)
+        times = torch.cat([times, torch.zeros(pad_len,)])
+        # print("audio_feats.shape_before_pad", audio_feats.shape)
+        audio_feats = torch.cat([audio_feats, torch.zeros(((pad_len+3), self.audio_feat_dim))])
         audio_feats = audio_feats[:self.max_features, :]
-        times = times[:self.max_features]
-        audio_pad_mask[times.shape[0]:] = 1
-        pad_len = self.max_features - times.shape[0]
-        times = torch.cat([times, torch.zeros(pad_len)])
+        # print("audio_feats.shape", audio_feats.shape)
+        if(audio_feats.shape[0] != self.max_features):
+            print(f"scene: {scene}")
+        # print("times.shape", times.shape)
+        # print("audio_pad_mask.shape", audio_pad_mask.shape)
         return audio_feats, times, audio_pad_mask

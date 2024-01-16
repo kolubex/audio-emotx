@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# LoRA
+from peft import LoraConfig, get_peft_model
 class finetune_WavLM_backbone(nn.Module):
     def __init__(self, config, conv_type = 'avg'):
         super(finetune_WavLM_backbone, self).__init__()
@@ -74,14 +76,28 @@ class finetune_WavLM_backbone(nn.Module):
         return [activations]
     
 class featExtract_finetuned_WavLM(nn.Module):
-    def __init__(self, model_path):
+    def __init__(self,config, model_path):
         super(featExtract_finetuned_WavLM, self).__init__()
-        self.model = self.get_model(model_path)
+        self.model = self.get_model(config, model_path)
 
-    def get_model(self, model_path):
-        model = torch.load(model_path)
-        model.eval()
-        return model
+    def get_model(self, config, model_path):
+        model_state_dict = torch.load(model_path)
+        model = finetune_WavLM_backbone(config)
+        lora_config = LoraConfig(
+            r=config["lora"]["r"],
+            lora_alpha=config["lora"]["alpha"],
+            target_modules=[
+                module.replace('%', str(11 - i))
+                for module in config["lora"]["target_modules"].split("@")
+                for i in range(config["num_wavlm_layers"])
+            ],
+            lora_dropout=config["lora"]["dropout"],
+            modules_to_save=config["lora"]["modules_to_save"].split("@"),
+        )
+        lora_model = get_peft_model(model, lora_config)
+        lora_model.load_state_dict(model_state_dict)
+        lora_model.eval()
+        return lora_model
 
     def forward(self, feats, masks, logits=False):
         feat = self.model(feats, masks, logits=False)

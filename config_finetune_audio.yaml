@@ -25,7 +25,7 @@ track_name_metadata_dir: "track_names/metadata"
 scene_feat_type: "mvit_v1" # "resnet50_places" # "generic"
 face_feat_type: "resnet50_fer" # "emo" # "generic"
 srt_feat_type: "independent" # "concat"
-audio_feat_type: "total" # "vocals", "no_vocals", "sfx", "music", "total"
+audio_feat_type: "vocals" # "vocals", "no_vocals", "sfx", "music", "total"
 srt_feat_model: "roberta"
 audio_feat_model: "wavlm"
 pkl_name: "all_movies.pkl"
@@ -114,7 +114,7 @@ wavlm_finetune:
     r : 32
     alpha: 32
     # target_modules : ["model.encoder.layers.%.attention.q_proj", "model.encoder.layers.%.attention.v_proj","model.encoder.layers.%.attention.k_proj"]
-    target_modules : "model.encoder.layers.%.attention.k_proj@model.encoder.layers.%.attention.q_proj@model.encoder.layers.%.attention.v_proj"
+    target_modules : "model.encoder.layers.%.attention.v_proj@model.encoder.layers.%.attention.q_proj@model.encoder.layers.%.attention.q_proj"
     dropout: 0.1
     modules_to_save : "head_conv1d@head_linear@head_conv1@head_conv2@head_conv3"
     # modules_to_save : "head_conv1d"

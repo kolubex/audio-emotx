@@ -199,21 +199,23 @@ class EmoTx(nn.Module):
 
         # Normalize the feats after attaching all embeddings. Input to the transformer encoder is now ready.
         feat = self.layer_norm(feat)
-
+        # make 1 in self.src_mask as True and 0 as False
+        self.src_mask = self.src_mask.to(feat.device).bool()
+        mask = mask.to(feat.device).bool()
         # Pass the prepared input to transformer encoder
         out1 = self.encoder.layers[0](feat,src_mask=self.src_mask.to(feat.device), src_key_padding_mask=mask)
         out = self.encoder.layers[0].self_attn(feat,feat,feat, attn_mask=self.src_mask.to(feat.device), key_padding_mask=mask)[1]
         # save attn1 as a numpy array
-        torch.save(out.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/attn1.pt')
-        torch.save(char_frames.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/char_bins.pt')
-        torch.save(scene_frames.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/scene_bins.pt')
-        torch.save(srt_bins.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/srt_bins.pt')
-        torch.save(audio_bins.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/audio_bins.pt')
+        # torch.save(out.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/attn1.pt')
+        # torch.save(char_frames.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/char_bins.pt')
+        # torch.save(scene_frames.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/scene_bins.pt')
+        # torch.save(srt_bins.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/srt_bins.pt')
+        # torch.save(audio_bins.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/audio_bins.pt')
         out = self.encoder.layers[1].self_attn(out1, out1, out1, attn_mask=self.src_mask.to(feat.device), key_padding_mask=mask)[1]
         # save attn2 as a .pt file
-        torch.save(out.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/attn.pt')
-        torch.save(mask.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/mask.pt')
-        torch.save(cls_ndxs.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/cls_ndxs.pt')
+        # torch.save(out.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/attn.pt')
+        # torch.save(mask.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/mask.pt')
+        # torch.save(cls_ndxs.detach().cpu(), '/ssd_scratch/cvit/kolubex/checkpoints/metadata/attnplots/cls_ndxs.pt')
         out1 = out1.detach().cpu().numpy()
         del out1
         out = self.encoder(feat, mask=self.src_mask.to(feat.device), src_key_padding_mask=mask)

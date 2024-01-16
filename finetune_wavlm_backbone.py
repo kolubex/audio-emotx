@@ -137,7 +137,7 @@ class trainer(object):
         """
         setup(rank, world_size)
         self.model = finetune_WavLM_backbone(
-            self.config["wavlm_finetune"], self.config["hugging_face_cache_path"]).to(self.device).to(rank)
+            self.config["wavlm_finetune"]).to(self.device).to(rank)
         wavlm_config = self.config["wavlm_finetune"]
         n = wavlm_config["num_wavlm_layers"]
         lora_config = LoraConfig(
@@ -160,7 +160,7 @@ class trainer(object):
                          rank], find_unused_parameters=True)
         self.optimizer = self.create_optimizer()
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, factor=0.5, patience=5, verbose=True)
+        self.optimizer, factor=0.5, patience=10, verbose=True)
         self.criterion = nn.BCEWithLogitsLoss()
         self.device = torch.device("cuda:{}".format(rank))
         train(epochs=self.config['epochs'], num_labels=self.train_dataset.top_k,
@@ -191,7 +191,7 @@ if __name__ == "__main__":
                 config["model_name"]+"__test_config.yaml")
     world_size = config["world_size"]
     # rank = config["rank"]
-    config["model_name"] = f"Wa_fi_ba_lo_t{config['top_k']}_bh_{config['num_wavlm_layers']}_l_{config['lr']}_lr_{config['audio_feat_type']}_au"
+    config["model_name"] = f"Wa_fi_ba_lo_t{config['top_k']}_bh_{config['num_wavlm_layers']}_l_{config['lr']}_lr_{config['wavlm_finetune']['lora']['r']}_r_{config['audio_feat_type']}_au"
     required_strings = ["k_proj", "v_proj", "q_proj"]
     for string in required_strings:
         for module in config["wavlm_finetune"]["lora"]["target_modules"].split("@"):
@@ -200,7 +200,7 @@ if __name__ == "__main__":
 
     if config["wandb"]["logging"]:
             wandb.init(
-                project=config["wandb"]["project"], entity=config["wandb"]["entity"])
+                project=config["wandb"]["project"], entity=config["wandb"]["entity"], config=config)
             wandb.run.name = config["model_name"]
     obj = trainer(config, wandb_run=wandb.run if config["wandb"]["logging"] else None)
     mp.spawn(obj.setup_training, args=(world_size,), nprocs=world_size)
