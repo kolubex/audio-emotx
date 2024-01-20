@@ -58,11 +58,11 @@ max_feats: 300
 max_srt_feats: 300
 max_audio_feats: 300
 batch_size: 4
-num_cpus: 1
-epochs: 30
+num_cpus: 8
+epochs: 40
 lr: 0.00001
 gpu_id: 0
-seed: 0
+seed: 1
 
 # WandB related variables
 wandb:

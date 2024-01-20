@@ -152,11 +152,16 @@ class trainer(object):
         optimizer = optim.Adam(self.model.parameters(), lr=self.config["lr"])
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=5, threshold=0.001)
         criterion = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor(self.config["pos_weight"][str(self.train_dataset.top_k)]).to(self.device))
+        if config["wandb"]["logging"]:
+            wandb.init(
+                project=config["wandb"]["project"], entity=config["wandb"]["entity"], config=config)
+            wandb.run.name = config["model_name"]
+        wandb_run = wandb.run if config["wandb"]["logging"] else None
         train(epochs=self.epochs, num_labels=self.train_dataset.top_k,
               train_dataloader=self.train_dataloader, val_dataloader=self.val_dataloader,
               device=self.device, emo2id=self.emo2id, model=self.model, optimizer=optimizer, scheduler=scheduler,
               criterion=criterion, pred_thresh=self.config["target_prediction_threshold"], masking=True,
-              wandb_logging=self.config["wandb"]["logging"], model_name=self.config["model_name"], save_path=Path(self.config["save_path"]))
+              wandb_logging=self.config["wandb"]["logging"], model_name=self.config["model_name"], save_path=Path(self.config["save_path"]),wandb_run=wandb_run)
 
 
 def fill_model_name(config):
