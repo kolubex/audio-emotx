@@ -303,13 +303,13 @@ def train(epochs, num_labels, train_dataloader, val_dataloader, device, emo2id,
                               time.time() - start_time))
         # Checkpoint selection (Scene, char, average, geometric-mean)
         print(f"Device: {device}")
-        if str(device).strip() == "cuda:0":
-            if wandb_logging:
-                wandb_run.log(data_to_log)
-            # print("Saving checkpoint")
-            new_ckpt_threshs = create_checkpoint(eval_mAPs, model, save_path, model_name, emo2id, train_metrics, eval_metrics, wandb_logging,
-                                             device, epoch, best_ev_score_scene, best_ev_score_char, best_ev_score_avg, best_ev_score_gm,wandb_run=wandb_run)
-            best_ev_score_scene, best_ev_score_char, best_ev_score_avg, best_ev_score_gm = new_ckpt_threshs
+        # if str(device).strip() == "cuda:0":
+        if wandb_logging:
+            wandb_run.log(data_to_log)
+        # print("Saving checkpoint")
+        new_ckpt_threshs = create_checkpoint(eval_mAPs, model, save_path, model_name, emo2id, train_metrics, eval_metrics, wandb_logging,
+                                            device, epoch, best_ev_score_scene, best_ev_score_char, best_ev_score_avg, best_ev_score_gm,wandb_run=wandb_run)
+        best_ev_score_scene, best_ev_score_char, best_ev_score_avg, best_ev_score_gm = new_ckpt_threshs
     # clean_up(wandb_logging, wandb_run)
 
 

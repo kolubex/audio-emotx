@@ -172,10 +172,12 @@ def fill_model_name(config):
     random_frame_selection = {True: "R", False: "nR"}
     feat_type = {"emo": 'e', "generic": 'g', "clip": 'c', "resnet50_places": 'r', "resnet50_fer": 'r', "concat": "co", "independent": "in", "mvit_v1": "m","total": "t", "sfx": "s", "vocals": "v", "no_vocals": "nv", "music": "m"}
     srt_feat_type = {True: 'P', False: 'F'}
-    srt_feat_model = {'roberta': 'r', 'clip': 'c','wavlm':'w'}
+    srt_feat_model = {'roberta': 'r', 'clip': 'c'}
+    audio_feat_model = {'clap':'cl','wavlm':'w'}
+    audio_feat_submodel = {'clap-htsat-fused':'chf',"larger_clap_general":"lcg","larger_clap_music":"lcm","larger_clap_music_and_speech":"lcms" }
     if float(config["model_no"]) in [3.0, 4.0]:
         model_no = '_'.join(str(config["model_no"]).split('.'))
-        model_name = "M{}.L{}.N{}.e{}.t{}.{}S.{}C.{}{}Sr.{}.Au.{}".format(model_no,
+        model_name = "M{}.L{}.N{}.e{}.t{}.{}S.{}C.{}{}Sr.{}.Au.{}.Sm{}".format(model_no,
                                                                     config["num_enc_layers"],
                                                                     config["num_chars"],
                                                                     len(np.format_float_positional(config["lr"]))-2,
@@ -185,7 +187,8 @@ def fill_model_name(config):
                                                                     feat_type[config["srt_feat_type"]],
                                                                     srt_feat_type[config["srt_feat_pretrained"]]+srt_feat_model[config["srt_feat_model"]],
                                                                     config["feat_sampling_rate"],
-                                                                    feat_type[config["audio_feat_type"]]+srt_feat_model[config["audio_feat_model"]]
+                                                                    feat_type[config["audio_feat_type"]]+audio_feat_model[config["audio_feat_model"]],
+                                                                    audio_feat_submodel[config["audio_feat_submodel"]]
                                                                     )
     else:
         model_no = '_'.join(str(config["model_no"]).split('.'))

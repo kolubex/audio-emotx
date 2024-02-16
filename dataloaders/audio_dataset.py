@@ -28,7 +28,7 @@ class audio_dataset(object):
         self.feat_model = config["audio_feat_model"]
         self.data_path = Path(config["data_path"])
         self.top_k = top_k
-        self.audio_feat_path = self.data_path/Path(config["audio_feat_dir"])/Path(f"""{config["audio_feat_type"]}""")
+        self.audio_feat_path = self.data_path/Path(config["audio_feat_dir"])/Path(f"""{config["audio_feat_type"]}""")/Path(f"""{config["audio_feat_submodel"]}""")
         self.max_features = config["max_audio_feats"] # as we have max_audio_feats(300) bins for each scene
         self.audio_feat_dim = config["feat_info"][self.feat_model]["audio_feat_dim"]
         self.audio_feats_dir = "pretrained" if config["audio_feat_pretrained"] else "finetuned_t_{}".format(self.top_k)
@@ -60,10 +60,12 @@ class audio_dataset(object):
         audio_feats = torch.empty((0, self.audio_feat_dim))
         times = torch.empty(0,)
         for scene in scenes:
-            with open(self.audio_feat_path/self.audio_feats_dir/(str(scene)+".pkl"), 'rb') as f:
+            with open(self.audio_feat_path/(str(scene)+".pkl"), 'rb') as f: # ! this is for clap
                 masks = pickle.load(f)
                 feats = pickle.load(f)
                 feats = feats.transpose(0, 1)
+                feats = feats[0].squeeze(0) # ! this is for clap
+                feats = feats.transpose(0, 1)  # ! this is for clap
                 fps_3_time = feats.shape[0]
                 # print("fps_3_time", fps_3_time)
                 time = numpy.arange(1,fps_3_time) * 1/3
